@@ -2,14 +2,15 @@
 
 namespace Danilowa\LaravelApiAuth\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Danilowa\LaravelApiAuth\DTOs\UserLoginData;
+use Danilowa\LaravelApiAuth\DTOs\UserLogoutData;
 use Danilowa\LaravelApiAuth\DTOs\UserRegistrationData;
 use Danilowa\LaravelApiAuth\Services\AccessTokenService;
+use Danilowa\LaravelResponseBuilder\JsonResponse as JsonResponseBuilder;
 
 class AuthenticationController extends Controller
 {
@@ -29,20 +30,23 @@ class AuthenticationController extends Controller
     /**
      * Register a new user and create an access token.
      *
-     * @param UserRegistrationData $request
-     * @return JsonResponse
+     * This method handles the registration of a new user.
+     * It validates the provided data, creates a new user in the database,
+     * and generates an access token for the user.
+     *
+     * @param UserRegistrationData $request The user registration data transfer object.
+     * @return JsonResponse A JSON response containing the newly created user and their access token.
      */
     public function register(UserRegistrationData $request): JsonResponse
     {
-        $user = $this->userModel::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        $data = $request->only(array_keys(config('apiauth.validation.registration.rules')));
+        $data['password'] = Hash::make($request->password);
+
+        $user = $this->userModel::create($data);
 
         $token = $this->accessTokenService->createToken($user, $request->token_name ?? $this->defaultTokenName);
 
-        return JsonResponse::success([
+        return JsonResponseBuilder::success([
             'user' => $user,
             'token' => $token->plainTextToken,
         ], $this->getMessage('user_created'), 201);
@@ -51,19 +55,22 @@ class AuthenticationController extends Controller
     /**
      * Log a user in and create an access token.
      *
-     * @param UserLoginData $request
-     * @return JsonResponse
+     * This method attempts to authenticate a user using the provided credentials.
+     * If successful, it generates an access token for the authenticated user.
+     *
+     * @param UserLoginData $request The user login data transfer object.
+     * @return JsonResponse A JSON response containing the access token and the authenticated user.
      */
     public function login(UserLoginData $request): JsonResponse
     {
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return JsonResponse::error(401, $this->getMessage('credentials_incorrect'));
+        if (!Auth::attempt($request->only(array_keys(config('apiauth.validation.login.rules'))))) {
+            return JsonResponseBuilder::error(401, $this->getMessage('credentials_incorrect'));
         }
 
         $user = Auth::user();
         $token = $this->accessTokenService->createToken($user, $request->token_name ?? $this->defaultTokenName);
 
-        return JsonResponse::success([
+        return JsonResponseBuilder::success([
             'token' => $token->plainTextToken,
             'user' => $user,
         ], $this->getMessage('user_logged_in'));
@@ -72,42 +79,55 @@ class AuthenticationController extends Controller
     /**
      * Log the user out, revoking their access tokens.
      *
-     * @param Request $request
-     * @return JsonResponse
+     * This method allows a user to log out by revoking their access tokens.
+     * It checks whether the user is authenticated and whether they have any active tokens.
+     *
+     * @param UserLogoutData $request The user logout data transfer object.
+     * @return JsonResponse A JSON response indicating the outcome of the logout process.
      */
-    public function logout(Request $request): JsonResponse
+    public function logout(UserLogoutData $request): JsonResponse
     {
+        if (!Auth::attempt($request->only('email', 'password'))) {
+            return JsonResponseBuilder::error(401, $this->getMessage('credentials_incorrect'));
+        }
+
+        $user = $this->userModel::find($request->user()->id);
         $revokeAll = config('apiauth.revoke_all_tokens');
 
+        if ($user->tokens()->count() === 0) {
+            return JsonResponseBuilder::error(404, $this->getMessage('no_active_token'));
+        }
+
         if ($revokeAll) {
-            $request->user()->tokens()->delete();
-            return JsonResponse::success([], $this->getMessage('tokens_revoked'));
+            $user->tokens()->delete();
+            return JsonResponseBuilder::success([], $this->getMessage('tokens_revoked'));
         }
 
-        $token = $request->user()->currentAccessToken();
-        if (!$token) {
-            return JsonResponse::error(404, $this->getMessage('no_active_token'));
-        }
-
+        $token = $user->tokens()->first();
         $this->accessTokenService->revokeToken($token);
-        return JsonResponse::success([], $this->getMessage('tokens_revoked'));
+        return JsonResponseBuilder::success([], $this->getMessage('token_revoked'));
     }
 
     /**
      * Get the currently authenticated user.
      *
-     * @return JsonResponse
+     * This method retrieves the currently authenticated user's information.
+     *
+     * @return JsonResponse A JSON response containing the authenticated user's data.
      */
     public function currentUser(): JsonResponse
     {
-        return JsonResponse::success(Auth::user());
+        return JsonResponseBuilder::success(Auth::user());
     }
 
     /**
      * Retrieve a message from the configuration.
      *
-     * @param string $key
-     * @return string
+     * This private method fetches a message from the configuration based on the provided key.
+     * If the key does not exist, it returns a default message.
+     *
+     * @param string $key The key for the message in the configuration.
+     * @return string The corresponding message or a default message if not found.
      */
     private function getMessage(string $key): string
     {

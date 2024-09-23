@@ -8,25 +8,25 @@ use Danilowa\LaravelApiAuth\Traits\HttpResponseException;
 
 /**
  * --------------------------------------------------------------------------
- * User Registration Data
+ * User Logout Data
  * --------------------------------------------------------------------------
  *
- * This class handles the validation rules for user registration requests.
+ * This class handles the validation rules for user logout requests.
  * It extends the FormRequest class to utilize Laravel's validation features.
  */
-class UserRegistrationData extends FormRequest
+class UserLogoutData extends FormRequest
 {
     use HttpResponseException;
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array The validation rules for user registration.
+     * @return array The validation rules for user logout.
      */
     public function rules(): array
     {
         // Retrieve the validation rules from the configuration
-        return config('apiauth.validation.registration.rules');
+        return config('apiauth.validation.logout.rules');
     }
 
     /**

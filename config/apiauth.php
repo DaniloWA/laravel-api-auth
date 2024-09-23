@@ -22,7 +22,7 @@ return [
      * The fully qualified class name of the user model that will be used
      * for authentication. Update this value if you have a custom user model.
      */
-    'user_model' => 'App\Models\User::class',
+    'user_model' => \App\Models\User::class,
 
     /**
      * --------------------------------------------------------------------------
@@ -57,10 +57,13 @@ return [
      */
     'messages' => [
         'user_created' => 'User created successfully!',
+        'user_not_logged_in' => 'User not logged in.',
         'user_logged_in' => 'User logged in!',
         'credentials_incorrect' => 'The provided credentials are incorrect.',
         'tokens_revoked' => 'Tokens revoked successfully!',
+        'token_revoked' => 'Token revoked successfully!',
         'default_error' => 'An error occurred.',
+        'no_active_token' => 'No active token found.',
     ],
 
     /**
@@ -73,6 +76,13 @@ return [
      */
     'validation' => [
         'login' => [
+            'rules' => [
+                'email' => 'required|email',
+                'password' => 'required|string',
+                // You can add or remove custom rules as needed here
+            ],
+        ],
+        'logout' => [
             'rules' => [
                 'email' => 'required|email',
                 'password' => 'required|string',

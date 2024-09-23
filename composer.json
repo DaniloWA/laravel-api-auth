@@ -1,6 +1,6 @@
 {
   "name": "danilowa/laravel-api-auth",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple and configurable Laravel package for easy API authentication with standardized responses.",
   "type": "library",
   "license": "MIT",
@@ -22,8 +22,8 @@
   "authors": [
     {
       "name": "Danilo Oliveira",
-      "email": "seu-email@example.com",
-      "homepage": "https://seu-site.com",
+      "email": "daniloworkdev@gmail.com",
+      "homepage": "http://www.daniloo.dev",
       "role": "Developer"
     }
   ],
@@ -41,7 +41,8 @@
       "Danilowa\\LaravelApiAuth\\Routes\\": "src/Routes/",
       "Danilowa\\LaravelApiAuth\\DTOs\\": "src/DTOs/",
       "Danilowa\\LaravelApiAuth\\Providers\\": "src/Providers/",
-      "Danilowa\\LaravelApiAuth\\Services\\": "src/Services/"
+      "Danilowa\\LaravelApiAuth\\Services\\": "src/Services/",
+      "Danilowa\\LaravelApiAuth\\Traits\\": "src/Traits/"
     }
   },
   "autoload-dev": {
