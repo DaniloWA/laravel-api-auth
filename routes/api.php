@@ -6,6 +6,6 @@ use Danilowa\LaravelApiAuth\Controllers\AuthenticationController;
 Route::prefix(config('apiauth.route_prefix'))->group(function () {
     Route::post('/register', [AuthenticationController::class, 'register']);
     Route::post('/login', [AuthenticationController::class, 'login']);
-    Route::post('/logout', [AuthenticationController::class, 'logout']);
+    Route::post('/logout', [AuthenticationController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/user', [AuthenticationController::class, 'currentUser'])->middleware('auth:sanctum');
 });
