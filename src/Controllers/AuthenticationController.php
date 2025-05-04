@@ -87,7 +87,7 @@ class AuthenticationController extends Controller
      */
     public function logout(UserLogoutData $request): JsonResponse
     {
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        if (!Auth::user()) {
             return JsonResponseBuilder::error(401, $this->getMessage('credentials_incorrect'));
         }
 
